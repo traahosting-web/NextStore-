@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -96,8 +95,15 @@
                 <div class="admin-title">Produk Store</div>
             </div>
             <div class="admin-card admin-form">
-                <h3>Tambah Produk Baru</h3>
+                <div class="form-group">
+                    <select id="product-selector" class="form-control selector-dropdown">
+                        <option value="new">+ Create New Data...</option>
+                    </select>
+                </div>
+                
                 <form id="form-product" style="margin-top: 1.5rem;">
+                    <input type="hidden" id="prod-id" value="">
+                    
                     <div class="form-group">
                         <label>Nama Produk</label>
                         <input type="text" id="prod-name" class="form-control" required>
@@ -106,7 +112,7 @@
                         <label>Gambar Produk (Cloudinary)</label>
                         <input type="file" id="prod-image" class="form-control" accept="image/*">
                         <img id="prod-image-preview" class="image-preview" alt="Preview">
-                        <small style="color:var(--text-secondary)">Biarkan kosong jika tanpa gambar.</small>
+                        <small style="color:var(--text-secondary)">Biarkan kosong jika tidak ingin mengubah gambar yang sudah ada.</small>
                     </div>
                     <div class="form-group">
                         <label>Deskripsi</label>
@@ -122,20 +128,12 @@
                         </div>
                         <button type="button" class="btn-success" id="btn-add-price">+ Tambah Paket</button>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Produk</button>
+                    
+                    <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                        <button type="submit" class="btn-primary" id="btn-submit-product" style="flex:1; margin-top:0;">Simpan Produk Baru</button>
+                        <button type="button" class="btn-danger" id="btn-delete-product" style="display:none; margin-top:0;">Hapus Data</button>
+                    </div>
                 </form>
-            </div>
-            <div class="admin-card">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Img</th>
-                            <th>Nama</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-table-body"></tbody>
-                </table>
             </div>
         </div>
 
@@ -145,8 +143,15 @@
                 <div class="admin-title">Aplikasi Mod</div>
             </div>
             <div class="admin-card admin-form">
-                <h3>Tambah Mod Baru</h3>
+                <div class="form-group">
+                    <select id="mod-selector" class="form-control selector-dropdown">
+                        <option value="new">+ Create New Data...</option>
+                    </select>
+                </div>
+                
                 <form id="form-mod" style="margin-top: 1.5rem;">
+                    <input type="hidden" id="mod-id" value="">
+                    
                     <div class="form-group">
                         <label>Nama Aplikasi</label>
                         <input type="text" id="mod-name" class="form-control" required>
@@ -161,8 +166,9 @@
                     </div>
                     <div class="form-group">
                         <label>Upload Gambar (Cloudinary)</label>
-                        <input type="file" id="mod-image" class="form-control" accept="image/*" required>
+                        <input type="file" id="mod-image" class="form-control" accept="image/*">
                         <img id="mod-image-preview" class="image-preview" alt="Preview">
+                        <small style="color:var(--text-secondary)">Biarkan kosong jika tidak ingin mengubah gambar yang sudah ada.</small>
                     </div>
                     <div class="form-group">
                         <label>Kategori</label>
@@ -173,25 +179,19 @@
                             <label class="checkbox-item"><input type="checkbox" class="mod-cat" value="Game"> Game</label>
                         </div>
                     </div>
-                    <div class="form-group" style="display:flex; gap:10px; align-items:center;">
-                        <input type="checkbox" id="mod-active" checked>
-                        <label style="margin:0;">Status Aktif (Ditampilkan)</label>
+                    <div class="form-group" style="display:flex; gap:12px; align-items:center; margin-top:1.5rem;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mod-active" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <label for="mod-active" style="margin:0; cursor:pointer;">Status Aktif (Ditampilkan)</label>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Mod</button>
+                    
+                    <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                        <button type="submit" class="btn-primary" id="btn-submit-mod" style="flex:1; margin-top:0;">Simpan Mod Baru</button>
+                        <button type="button" class="btn-danger" id="btn-delete-mod" style="display:none; margin-top:0;">Hapus Data</button>
+                    </div>
                 </form>
-            </div>
-            <div class="admin-card">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Img</th>
-                            <th>Nama</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mods-table-body"></tbody>
-                </table>
             </div>
         </div>
 
@@ -201,8 +201,15 @@
                 <div class="admin-title">Testimoni</div>
             </div>
             <div class="admin-card admin-form">
-                <h3>Tambah Testimoni</h3>
+                <div class="form-group">
+                    <select id="testi-selector" class="form-control selector-dropdown">
+                        <option value="new">+ Create New Data...</option>
+                    </select>
+                </div>
+                
                 <form id="form-testi" style="margin-top: 1.5rem;">
+                    <input type="hidden" id="testi-id" value="">
+                    
                     <div class="form-group">
                         <label>Nama Pelanggan</label>
                         <input type="text" id="testi-name" class="form-control" required>
@@ -214,28 +221,26 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Rating (1 - 5)</label>
-                        <input type="number" id="testi-rating" class="form-control" min="1" max="5" value="5" required>
+                        <label>Rating Produk</label>
+                        <div class="star-rating" id="star-rating-container">
+                            <svg data-val="1" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            <svg data-val="2" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            <svg data-val="3" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            <svg data-val="4" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            <svg data-val="5" viewBox="0 0 24 24" class="selected"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        </div>
+                        <input type="hidden" id="testi-rating" value="5">
                     </div>
                     <div class="form-group">
                         <label>Komentar</label>
                         <textarea id="testi-comment" class="form-control" rows="3" required></textarea>
                     </div>
-                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Testi</button>
+                    
+                    <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                        <button type="submit" class="btn-primary" id="btn-submit-testi" style="flex:1; margin-top:0;">Simpan Testi Baru</button>
+                        <button type="button" class="btn-danger" id="btn-delete-testi" style="display:none; margin-top:0;">Hapus Data</button>
+                    </div>
                 </form>
-            </div>
-            <div class="admin-card">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Nama</th>
-                            <th>Rating</th>
-                            <th>Komentar</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="testi-table-body"></tbody>
-                </table>
             </div>
         </div>
 
@@ -244,5 +249,3 @@
     <script type="module" src="admin.js"></script>
 </body>
 </html>
-
-
