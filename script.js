@@ -347,7 +347,7 @@ if (!path.includes('login.html') && !path.includes('register.html')) {
         { id: 101, name: "hypic mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "#", img: "hypic.jpg" },
         { id: 101, name: "autorespon wa  mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/y89HAaXM", img: "forwa.jpg" },
         { id: 101, name: "animein mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/y89HAaXM", img: "animein.jpg" },
-        { id: 101, name: "Wink mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/DqVLGXa6", img: "Wink.jpg" },
+        { id: 101, name: "Wink mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/DqVLGXa6", img: "wink.jpg" },
         { id: 102, name: "PicsArt Pro MOD", price: "GRATIS", desc: "Gold Unlocked, No Ads.", link: "#", img: "picsart.jpg" }
     ];
 
