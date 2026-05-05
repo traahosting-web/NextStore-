@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - NexturaStore</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body">
+    <div id="loading-overlay" style="display: flex;">Memeriksa Otorisasi...</div>
+
+    <!-- Sidebar Nav -->
+    <div class="admin-sidebar">
+        <div class="admin-logo">Nextura<span>Admin</span></div>
+        <div class="admin-nav">
+            <div class="admin-nav-item active" data-tab="tab-dashboard">
+                <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                <span>Dashboard</span>
+            </div>
+            <div class="admin-nav-item" data-tab="tab-users">
+                <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                <span>Manajemen User</span>
+            </div>
+            <div class="admin-nav-item" data-tab="tab-products">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
+                <span>Produk Store</span>
+            </div>
+            <div class="admin-nav-item" data-tab="tab-mods">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                <span>Aplikasi Mod</span>
+            </div>
+            <div class="admin-nav-item" data-tab="tab-testi">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+                <span>Testimoni</span>
+            </div>
+            <div class="admin-nav-item" id="btn-back-home" style="margin-top: auto;">
+                <svg viewBox="0 0 24 24"><path d="M21 11H6.83l3.58-3.59L9 6l-6 6 6 6 1.41-1.41L6.83 13H21v-2z"/></svg>
+                <span>Kembali ke Web</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        
+        <!-- Tab Dashboard -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="admin-header">
+                <div class="admin-title">Dashboard Utama</div>
+            </div>
+            <div class="admin-card">
+                <p>Selamat datang di Admin Panel NexturaStore.</p>
+                <p style="color: var(--text-secondary); margin-top: 10px; font-size: 0.9rem;">Pilih menu di samping kiri untuk mengelola data website secara realtime.</p>
+            </div>
+        </div>
+
+        <!-- Tab Users -->
+        <div id="tab-users" class="tab-content">
+            <div class="admin-header">
+                <div class="admin-title">Manajemen User</div>
+            </div>
+            <div class="admin-card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>UID</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Data User masuk kesini -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Products -->
+        <div id="tab-products" class="tab-content">
+            <div class="admin-header">
+                <div class="admin-title">Produk Store</div>
+            </div>
+            <div class="admin-card admin-form">
+                <h3>Tambah Produk Baru</h3>
+                <form id="form-product" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Nama Produk</label>
+                        <input type="text" id="prod-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gambar Produk (Cloudinary)</label>
+                        <input type="file" id="prod-image" class="form-control" accept="image/*">
+                        <small style="color:var(--text-secondary)">Biarkan kosong jika tanpa gambar.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Deskripsi</label>
+                        <textarea id="prod-desc" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Daftar Harga (Paket)</label>
+                        <div id="price-list-container">
+                            <div class="dynamic-row">
+                                <input type="text" class="form-control price-label" placeholder="Label (Contoh: 1 Bulan Privat)" required>
+                                <input type="text" class="form-control price-val" placeholder="Harga (Contoh: Rp10.000)" required>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-success" id="btn-add-price">+ Tambah Paket</button>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Produk</button>
+                </form>
+            </div>
+            <div class="admin-card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Img</th>
+                            <th>Nama</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Mods -->
+        <div id="tab-mods" class="tab-content">
+            <div class="admin-header">
+                <div class="admin-title">Aplikasi Mod</div>
+            </div>
+            <div class="admin-card admin-form">
+                <h3>Tambah Mod Baru</h3>
+                <form id="form-mod" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Nama Aplikasi</label>
+                        <input type="text" id="mod-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Link Download</label>
+                        <input type="url" id="mod-link" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Versi</label>
+                        <input type="text" id="mod-version" class="form-control" placeholder="1.0.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Gambar (Cloudinary)</label>
+                        <input type="file" id="mod-image" class="form-control" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox" class="mod-cat" value="Tools"> Tools</label>
+                            <label class="checkbox-item"><input type="checkbox" class="mod-cat" value="Editing"> Editing</label>
+                            <label class="checkbox-item"><input type="checkbox" class="mod-cat" value="Sosmed"> Sosmed</label>
+                            <label class="checkbox-item"><input type="checkbox" class="mod-cat" value="Game"> Game</label>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display:flex; gap:10px; align-items:center;">
+                        <input type="checkbox" id="mod-active" checked>
+                        <label style="margin:0;">Status Aktif (Ditampilkan)</label>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Mod</button>
+                </form>
+            </div>
+            <div class="admin-card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Img</th>
+                            <th>Nama</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mods-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab Testimonials -->
+        <div id="tab-testi" class="tab-content">
+            <div class="admin-header">
+                <div class="admin-title">Testimoni</div>
+            </div>
+            <div class="admin-card admin-form">
+                <h3>Tambah Testimoni</h3>
+                <form id="form-testi" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label>Nama Pelanggan</label>
+                        <input type="text" id="testi-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Produk yang Dibeli</label>
+                        <select id="testi-product" class="form-control" required>
+                            <option value="">-- Pilih Produk --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating (1 - 5)</label>
+                        <input type="number" id="testi-rating" class="form-control" min="1" max="5" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Komentar</label>
+                        <textarea id="testi-comment" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 200px; margin-top:1rem;">Simpan Testi</button>
+                </form>
+            </div>
+            <div class="admin-card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Rating</th>
+                            <th>Komentar</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="testi-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
