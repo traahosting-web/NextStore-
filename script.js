@@ -1,5 +1,6 @@
 import { 
     auth, 
+    db,
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     googleProvider, 
@@ -8,11 +9,15 @@ import {
     signOut, 
     sendPasswordResetEmail, 
     fetchSignInMethodsForEmail,
-    sendEmailVerification // 👈 Tambahkan ini
+    sendEmailVerification,
+    doc,
+    setDoc,
+    getDoc,
+    collection,
+    onSnapshot
 } from './firebase.js';
 
-
-// ========== AUTHENTICATION LOGIC ==========
+// ========== AUTHENTICATION & RBAC LOGIC ==========
 const path = window.location.pathname;
 const loadingOverlay = document.getElementById('loading-overlay');
 
@@ -20,8 +25,8 @@ const showLoading = () => { if (loadingOverlay) loadingOverlay.style.display = '
 const hideLoading = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };
 const handleError = (error) => { hideLoading(); alert("Error: " + error.message); };
 
-// Auth State Observer
-onAuthStateChanged(auth, (user) => {
+// Auth State Observer with RBAC check
+onAuthStateChanged(auth, async (user) => {
     const isAuthPage = path.includes('login.html') || path.includes('register.html');
     
     if (user) {
@@ -46,6 +51,30 @@ onAuthStateChanged(auth, (user) => {
         if (userEmail) {
             userEmail.innerText = user.email;
         }
+
+        // RBAC: Check or Create User Document
+        const userRef = doc(db, 'users', user.uid);
+        try {
+            const docSnap = await getDoc(userRef);
+            if (!docSnap.exists()) {
+                // Auto create document for new user
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email,
+                    role: 'user', // Default role
+                    createdAt: new Date()
+                });
+            } else {
+                const userData = docSnap.data();
+                const btnAdmin = document.getElementById('btn-admin');
+                // Tampilkan menu Admin Panel jika role == admin
+                if (userData.role === 'admin' && btnAdmin) {
+                    btnAdmin.style.display = 'flex';
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching user role: ", err);
+        }
         
     } else {
         if (!isAuthPage) window.location.href = 'login.html';
@@ -62,8 +91,8 @@ if (path.includes('login.html')) {
     const loginForm = document.getElementById('login-form');
     const resetForm = document.getElementById('reset-form');
     const resetError = document.getElementById('reset-error');
-    const authTitle = document.getElementById('auth-title'); // 👈 Kontrol Judul
-    const authError = document.getElementById('auth-error'); // 👈 Elemen Error Login
+    const authTitle = document.getElementById('auth-title');
+    const authError = document.getElementById('auth-error'); 
 
     if (btnForgot && btnBackLogin && loginForm && resetForm) {
         btnForgot.addEventListener('click', (e) => {
@@ -71,9 +100,7 @@ if (path.includes('login.html')) {
             loginForm.style.display = 'none';
             resetForm.style.display = 'block';
             
-            // Ubah judul form
             if (authTitle) authTitle.innerText = 'Reset Password';
-            // Sembunyikan pesan error login
             if (authError) authError.style.display = 'none';
         });
 
@@ -81,14 +108,11 @@ if (path.includes('login.html')) {
             resetForm.style.display = 'none';
             loginForm.style.display = 'block';
             
-            // Kembalikan judul form
             if (authTitle) authTitle.innerText = 'Login';
-            // Sembunyikan pesan error reset password
             if (resetError) resetError.style.display = 'none';
         });
     }
 
-    // 📌 Sembunyikan pesan reset ketika pengguna mengetik ulang email
     const resetEmailInput = document.getElementById('reset-email');
     if (resetEmailInput) {
         resetEmailInput.addEventListener('input', () => {
@@ -104,7 +128,6 @@ if (path.includes('login.html')) {
 
             const resetEmail = document.getElementById('reset-email').value;
 
-            // Memeriksa apakah email ada di database Firebase
             fetchSignInMethodsForEmail(auth, resetEmail)
                 .then((signInMethods) => {
                     if (signInMethods.length === 0) {
@@ -117,7 +140,6 @@ if (path.includes('login.html')) {
                             resetError.innerText = "Email tidak ditemukan atau belum terdaftar. Silakan periksa kembali email Anda.";
                         }
                     } else {
-                        // Jika email terdaftar
                         sendPasswordResetEmail(auth, resetEmail)
                             .then(() => {
                                 hideLoading();
@@ -197,7 +219,7 @@ if (path.includes('login.html')) {
                 hideLoading();
                 if (errorEl) {
                     errorEl.style.display = 'block';
-                    errorEl.innerText = '❌ ' + error.message;
+                    errorEl.innerText = 'Error: ' + error.message;
                 }
             });
         });
@@ -226,13 +248,10 @@ if (path.includes('register.html')) {
 
             createUserWithEmailAndPassword(auth, email, pass)
                 .then((userCredential) => {
-                    // Kirim email verifikasi setelah sukses dibuat
                     sendEmailVerification(userCredential.user)
                         .then(() => {
                             hideLoading();
                             alert("Link verifikasi telah dikirim ke email Anda! Silakan cek kotak masuk atau folder spam sebelum login.");
-                            
-                            // Logout otomatis agar tidak langsung masuk sebelum verifikasi
                             signOut(auth);
                             window.location.href = 'login.html';
                         })
@@ -263,47 +282,13 @@ if (path.includes('register.html')) {
 }
 
 
-// Logika Penyaringan Pencarian Produk & Mod
-const searchInput = document.querySelector('.search-input');
-if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        
-        // Filter Produk Store
-        const productCards = document.querySelectorAll('#store-list .card');
-        productCards.forEach(card => {
-            const title = card.querySelector('.card-title').textContent.toLowerCase();
-            if (title.includes(query)) {
-                card.style.display = ''; // Tampilkan kembali
-            } else {
-                card.style.display = 'none'; // Sembunyikan
-            }
-        });
-        
-        // Filter Mod
-        const modCards = document.querySelectorAll('#mod-list .card');
-        modCards.forEach(card => {
-            const title = card.querySelector('.card-title').textContent.toLowerCase();
-            if (title.includes(query)) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
-}
-
-// Logout Logic
-const btnLogout = document.getElementById('btn-logout');
-if (btnLogout) {
-    btnLogout.addEventListener('click', () => {
-        showLoading();
-        signOut(auth).catch(handleError);
-    });
-}
-
 // ========== STORE UI & SPA LOGIC ==========
-if (!path.includes('login.html') && !path.includes('register.html')) {
+// Real-time Data Arrays
+let products = [];
+let mods = [];
+let testimonials = [];
+
+if (!path.includes('login.html') && !path.includes('register.html') && !path.includes('admin.html')) {
 
     const body = document.body;
     const btnTheme = document.getElementById('btn-theme');
@@ -334,63 +319,41 @@ if (!path.includes('login.html') && !path.includes('register.html')) {
         });
     }
 
-    // --- Data Produk dengan Gambar ---
-    const products = [
-        { id: 1, name: "Alight Motion Premium", price: "Rp2.000 - Rp5.000", desc: "Unlock semua efek premium, tanpa watermark, export 4K.", prices: ["1 akun privat (1 Tahun) - Rp2.000", "3 Akun Privat (1 Tahun) - Rp5.000", "7 Akun Privat (1 tahun) - Rp10.000"], img: "am.jpg" },
-        { id: 2, name: "Spotify Premium", price: "Rp5.000 - Rp25.000", desc: "Dengarkan musik tanpa iklan, skip lagu tak terbatas, download offline.", prices: ["1 Bulan Inv Fam - Rp5.000", "3 Bulan Private - Rp15.000", "6 Bulan Private - Rp25.000"], img: "spotify.jpg" },
-        { id: 3, name: "CapCut Premium", price: "Rp3.000 - Rp12.000", desc: "Akses semua template Pro, efek transisi premium, dan cloud space.", prices: ["1 Bulan Sharing - Rp3.000", "1 Tahun Private - Rp8.000", "Lifetime Private - Rp12.000"], img: "capcut.jpg" },
-        { id: 4, name: "Wink Premium", price: "Rp4.000 - Rp18.000", desc: "Enhance video jadi jernih, akses semua alat retouch VIP.", prices: ["1 Bulan Sharing - Rp4.000", "1 Tahun Private - Rp12.000", "Lifetime Private - Rp18.000"], img: "wink.jpg" }
-    ];
-
-    const mods = [
-        { id: 101, name: "Alight motion mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "#", img: "am.jpg" },
-        { id: 101, name: "hypic mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "#", img: "hypic.jpg" },
-        { id: 101, name: "autorespon wa  mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/y89HAaXM", img: "forwa.jpg" },
-        { id: 101, name: "animein mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/y89HAaXM", img: "animein.jpg" },
-        { id: 101, name: "Wink mod", price: "GRATIS", desc: "Unlock All Skins, God Mode.", link: "https://sfl.gl/DqVLGXa6", img: "wink.jpg" },
-        { id: 102, name: "PicsArt Pro MOD", price: "GRATIS", desc: "Gold Unlocked, No Ads.", link: "#", img: "picsart.jpg" }
-    ];
-
-    const testimonials = [
-        { name: "Anonim123", prod: "Spotify Premium", date: "02 Mei 2026", price: "Rp5.000", comment: "Cepat dan amanah!" },
-        { name: "User_Keren", prod: "CapCut Pro", date: "01 Mei 2026", price: "Rp3.000", comment: "Satset gak ribet" },
-        { name: "BudiS", prod: "Alight Motion", date: "30 Apr 2026", price: "Rp10.000", comment: "Amanah trusted seller" },
-        { name: "Nisa_A", prod: "Wink Premium", date: "29 Apr 2026", price: "Rp4.000", comment: "Pelayanan cepat banget" }
-    ];
-
     const cartSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1.003 1.003 0 0 0 20 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>`;
     const downloadSvg = `<svg viewBox="0 0 24 24" fill="currentColor" width="24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>`;
 
-    // --- Render Functions dengan gambar/URL ---
-    const renderStore = () => {
+    // --- Render Functions from Firebase Data ---
+    window.renderStore = () => {
         const storeList = document.getElementById('store-list');
         if (storeList) {
-            storeList.innerHTML = products.map(p => `
-                <div class="card" onclick="openDetail(${p.id})">
+            storeList.innerHTML = products.map(p => {
+                const basePrice = p.prices && p.prices.length > 0 ? p.prices[0].price : '';
+                return `
+                <div class="card" onclick="openDetail('${p.id}')">
                     <div class="card-img">
-                        ${p.img ? `<img src="${p.img}" alt="${p.name}">` : p.name.charAt(0)}
+                        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}">` : p.name.charAt(0)}
                     </div>
                     <div class="card-info">
                         <div class="card-title">${p.name}</div>
-                        <div class="card-price">${p.price}</div>
+                        <div class="card-price">Mulai ${basePrice}</div>
                     </div>
                     <div class="icon-btn">${cartSvg}</div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     };
 
-        const renderMods = () => {
+    window.renderMods = () => {
         const modList = document.getElementById('mod-list');
         if (modList) {
             modList.innerHTML = mods.map(m => `
-                <div class="card" onclick="${m.link && m.link !== '#' ? `window.open('${m.link}', '_blank')` : `alert('Mendownload ${m.name}...')`}">
-                    <div class="card-img" style="${m.img ? 'background:none' : 'background:#ef4444'}">
-                        ${m.img ? `<img src="${m.img}" alt="${m.name}">` : m.name.charAt(0)}
+                <div class="card" onclick="${m.downloadLink && m.downloadLink !== '#' ? `window.open('${m.downloadLink}', '_blank')` : `alert('Mendownload ${m.name}...')`}">
+                    <div class="card-img" style="${m.imageUrl ? 'background:none' : 'background:#ef4444'}">
+                        ${m.imageUrl ? `<img src="${m.imageUrl}" alt="${m.name}">` : m.name.charAt(0)}
                     </div>
                     <div class="card-info">
-                        <div class="card-title">${m.name}</div>
-                        <div class="card-price" style="color:var(--text-secondary)">${m.price}</div>
+                        <div class="card-title">${m.name} <span style="font-size:0.7rem; background:#3b82f6; padding:2px 6px; border-radius:4px; color:white;">v${m.version || '1.0'}</span></div>
+                        <div class="card-price" style="color:var(--text-secondary)">GRATIS</div>
                     </div>
                     <div class="icon-btn">${downloadSvg}</div>
                 </div>
@@ -398,23 +361,67 @@ if (!path.includes('login.html') && !path.includes('register.html')) {
         }
     };
 
-    const renderTesti = () => {
+    window.renderTesti = () => {
         const testiList = document.getElementById('testi-list');
         if (testiList) {
-            const stars = `<div class="stars">` + `<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`.repeat(5) + `</div>`;
-            testiList.innerHTML = testimonials.map(t => `
+            testiList.innerHTML = testimonials.map(t => {
+                const p = products.find(prod => prod.id === t.productId);
+                const prodName = p ? p.name : 'Produk Nextura';
+                const dateObj = t.createdAt ? new Date(t.createdAt.seconds * 1000) : new Date();
+                const dateStr = dateObj.toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+                const ratingCount = t.rating || 5;
+                const stars = `<div class="stars">` + `<svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`.repeat(ratingCount) + `</div>`;
+                
+                return `
                 <div class="card testi-card">
                     <div class="testi-header">
                         <span class="testi-name">${t.name}</span>
-                        <span class="testi-date">${t.date}</span>
+                        <span class="testi-date">${dateStr}</span>
                     </div>
-                    <div style="font-size:0.8rem; color:var(--text-secondary)">${t.prod} - ${t.price}</div>
+                    <div style="font-size:0.8rem; color:var(--text-secondary)">${prodName}</div>
                     ${stars}
                     <div class="testi-comment">"${t.comment}"</div>
                 </div>
-            `).join('');
+            `}).join('');
         }
     };
+
+    // Listeners Real-time Firestore
+    onSnapshot(collection(db, 'products'), (snapshot) => {
+        products = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        renderStore();
+        renderTesti(); // Panggil ulang untuk mapping nama produk
+    });
+
+    onSnapshot(collection(db, 'mods'), (snapshot) => {
+        mods = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).filter(m => m.isActive !== false);
+        renderMods();
+    });
+
+    onSnapshot(collection(db, 'testimonials'), (snapshot) => {
+        testimonials = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        renderTesti();
+    });
+
+    // --- Pencarian ---
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            
+            const productCards = document.querySelectorAll('#store-list .card');
+            productCards.forEach(card => {
+                const title = card.querySelector('.card-title').textContent.toLowerCase();
+                card.style.display = title.includes(query) ? '' : 'none';
+            });
+            
+            const modCards = document.querySelectorAll('#mod-list .card');
+            modCards.forEach(card => {
+                const title = card.querySelector('.card-title').textContent.toLowerCase();
+                card.style.display = title.includes(query) ? '' : 'none';
+            });
+        });
+    }
 
     // --- Nav & Detail Logic ---
     const navItems = document.querySelectorAll('.nav-item');
@@ -440,24 +447,26 @@ if (!path.includes('login.html') && !path.includes('register.html')) {
         if (detailSection) detailSection.classList.add('active');
         navItems.forEach(n => n.classList.remove('active'));
 
-        const pricesHTML = p.prices.map(price => `
-            <div class="price-item">
-                <span style="font-weight:600">${price.split('-')[0]}</span>
-                <span style="color:var(--success); font-weight:700">${price.split('-')[1]}</span>
-            </div>
-        `).join('');
+        let pricesHTML = '';
+        if(p.prices && p.prices.length > 0) {
+            pricesHTML = p.prices.map(pr => `
+                <div class="price-item">
+                    <span style="font-weight:600">${pr.label}</span>
+                    <span style="color:var(--success); font-weight:700">${pr.price}</span>
+                </div>
+            `).join('');
+        }
 
-        const waText = encodeURIComponent(`Halo, saya ingin order ${p.name}`);
-        const waLink = `https://wa.me/6283190718255?text=${waText}`;
+        const waLink = p.whatsappLink || `https://wa.me/6283190718255?text=${encodeURIComponent(`Halo, saya ingin order ${p.name}`)}`;
 
         const detailContent = document.getElementById('detail-content');
         if (detailContent) {
             detailContent.innerHTML = `
                 <div class="detail-img-box" style="width: 80px; height: 80px; margin: 0 auto 1.5rem; border-radius: 50%; overflow: hidden;">
-                    ${p.img ? `<img src="${p.img}" style="width:100%; height:100%; object-fit:cover;" alt="${p.name}">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-color); color:white; font-size:2rem">${p.name.charAt(0)}</div>`}
+                    ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%; height:100%; object-fit:cover;" alt="${p.name}">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-color); color:white; font-size:2rem">${p.name.charAt(0)}</div>`}
                 </div>
                 <h2 class="detail-title">${p.name}</h2>
-                <p style="text-align:center; color:var(--text-secondary); margin-bottom: 1.5rem;">${p.desc}</p>
+                <p style="text-align:center; color:var(--text-secondary); margin-bottom: 1.5rem;">${p.description || ''}</p>
                 <div class="price-list">${pricesHTML}</div>
                 <a href="${waLink}" target="_blank" class="btn-primary">Order via WhatsApp</a>
             `;
@@ -476,10 +485,6 @@ if (!path.includes('login.html') && !path.includes('register.html')) {
             if (storeNav) storeNav.classList.add('active');
         });
     }
-
-    renderStore();
-    renderMods();
-    renderTesti();
 }
 
 // Fungsi Dropdown Profil
@@ -490,7 +495,6 @@ window.toggleDropdown = function() {
     }
 }
 
-// Menutup dropdown saat mengklik di luar area foto profil
 window.onclick = function(event) {
     if (!event.target.matches('#user-avatar')) {
         const dropdown = document.getElementById('profile-dropdown');
@@ -499,65 +503,11 @@ window.onclick = function(event) {
         }
     }
 };
-// ==========================================
-// TAMBAHAN FITUR: MENU HAMBURGER & DOWNLOAD
-// ==========================================
 
-// 1. Memperbarui fungsi renderMods agar tombol download berfungsi sungguhan
-window.renderMods = function() {
-    const modList = document.getElementById('mod-list');
-    if (modList) {
-        modList.innerHTML = mods.map(m => `
-            <div class="card" onclick="${m.link && m.link !== '#' ? `window.open('${m.link}', '_blank')` : `alert('Mendownload ${m.name}...')`}">
-                <div class="card-img" style="${m.img ? 'background:none' : 'background:#ef4444'}">
-                    ${m.img ? `<img src="${m.img}" alt="${m.name}">` : m.name.charAt(0)}
-                </div>
-                <div class="card-info">
-                    <div class="card-title">${m.name}</div>
-                    <div class="card-price" style="color:var(--text-secondary)">${m.price}</div>
-                </div>
-                <div class="icon-btn">${downloadSvg}</div>
-            </div>
-        `).join('');
-    }
-};
-
-// Panggil ulang renderMods setelah penambahan fungsi
-if (document.getElementById('mod-list')) {
-    renderMods();
+const btnLogout = document.getElementById('btn-logout');
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        showLoading();
+        signOut(auth).catch(handleError);
+    });
 }
-
-// 2. Mengaktifkan logika menu hamburger & tema warna
-document.addEventListener("DOMContentLoaded", function() {
-    const btnMenu = document.getElementById("btn-menu");
-    const sidebar = document.getElementById("hamburger-menu");
-    const btnClose = document.getElementById("btn-close-menu");
-    const btnLogout = document.getElementById("btn-sidebar-logout");
-
-    if (btnMenu) {
-        btnMenu.addEventListener("click", function() {
-            sidebar.classList.add("active");
-        });
-    }
-
-    if (btnClose) {
-        btnClose.addEventListener("click", function() {
-            sidebar.classList.remove("active");
-        });
-    }
-
-    if (btnLogout) {
-        btnLogout.addEventListener("click", function() {
-            if (confirm("Apakah Anda yakin ingin keluar?")) {
-                localStorage.clear();
-                window.location.href = "login.html"; 
-            }
-        });
-    }
-
-    // Terapkan tema warna utama dari halaman Setting
-    const savedColor = localStorage.getItem('web_theme_color');
-    if (savedColor) {
-        document.documentElement.style.setProperty('--primary-color', savedColor);
-    }
-});
