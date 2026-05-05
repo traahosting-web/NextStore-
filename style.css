@@ -112,7 +112,8 @@ main { padding: 80px 1rem 80px 1rem; max-width: 600px; margin: 0 auto; min-heigh
 .price-list { background: var(--surface-color); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
 .price-item { padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
 .price-item:last-child { border-bottom: none; }
-.btn-primary { display: block; width: 100%; padding: 14px; background-color: var(--accent-color); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 1rem; border: none; cursor: pointer;}
+.btn-primary { display: block; width: 100%; padding: 14px; background-color: var(--accent-color); color: white; text-align: center; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 1rem; border: none; cursor: pointer; transition: opacity 0.3s;}
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-secondary { background-color: transparent; border: 1px solid var(--text-secondary); color: var(--text-primary); }
 
 /* Auth Pages Specific */
@@ -146,7 +147,7 @@ main { padding: 80px 1rem 80px 1rem; max-width: 600px; margin: 0 auto; min-heigh
 }
 
 .auth-link { text-align: center; display: block; margin-top: 1rem; color: var(--accent-color); text-decoration: none; font-size: 0.9rem; }
-#loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); color: white; display: flex; justify-content: center; align-items: center; z-index: 9999; display: none; }
+#loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); color: white; display: flex; flex-direction: column; gap: 10px; justify-content: center; align-items: center; z-index: 9999; display: none; }
 .error-message {
     background-color: rgba(239, 68, 68, 0.15);
     border: 1px solid #ef4444;
@@ -397,7 +398,7 @@ body[data-theme="light"] .card {
 }
 
 /* =========================================
-   ADMIN PANEL SPECIFIC STYLES
+   ADMIN PANEL SPECIFIC STYLES & RESPONSIVE FIXES
 ========================================= */
 .admin-body {
     background-color: #0f172a;
@@ -407,7 +408,34 @@ body[data-theme="light"] .card {
     padding: 0;
     margin: 0;
     max-width: 100%;
+    overflow-x: hidden;
 }
+
+.admin-header-mobile {
+    display: none;
+    padding: 1rem 1.5rem;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    width: 100%;
+}
+
+.btn-hamburger {
+    background: none;
+    border: none;
+    color: #f8fafc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+}
+
+.btn-hamburger svg { width: 28px; height: 28px; fill: currentColor; }
 
 .admin-sidebar {
     width: 250px;
@@ -415,10 +443,12 @@ body[data-theme="light"] .card {
     border-right: 1px solid #334155;
     display: flex;
     flex-direction: column;
-    padding: 1rem 0;
+    padding: 1.5rem 0;
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 1002;
 }
 
 .admin-logo {
@@ -438,6 +468,7 @@ body[data-theme="light"] .card {
     flex-direction: column;
     gap: 0.5rem;
     padding: 0 1rem;
+    height: 100%;
 }
 
 .admin-nav-item {
@@ -466,6 +497,7 @@ body[data-theme="light"] .card {
     margin-left: 250px;
     padding: 2rem;
     overflow-y: auto;
+    width: calc(100% - 250px);
 }
 
 .admin-header {
@@ -486,12 +518,14 @@ body[data-theme="light"] .card {
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+    overflow-x: auto; /* Prevent table overflow */
 }
 
 .admin-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    min-width: 600px; /* Ensure tables don't squish too much */
 }
 
 .admin-table th, .admin-table td {
@@ -515,7 +549,7 @@ body[data-theme="light"] .card {
     background: #0f172a;
     color: #f8fafc;
     border: 1px solid #334155;
-    padding: 4px 8px;
+    padding: 6px 8px;
     border-radius: 6px;
     outline: none;
 }
@@ -569,10 +603,26 @@ body[data-theme="light"] .card {
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
+.image-preview {
+    width: 100%; max-width: 200px; height: auto; border-radius: 8px; margin-top: 10px; display: none; object-fit: cover; border: 1px solid var(--border-color);
+}
+
+/* Toast Notification Styles */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5); animation: slideInRight 0.3s ease forwards; display: flex; align-items: center; gap: 10px; }
+.toast.success { background-color: var(--success); }
+.toast.error { background-color: #ef4444; }
+@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; } }
+
+/* Mobile Responsive Admin Panel Fix */
+.sidebar-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1001; display: none; }
+.sidebar-overlay.active { display: block; }
+
 @media (max-width: 768px) {
-    .admin-sidebar { width: 60px; padding: 1rem 0.5rem;}
-    .admin-logo span, .admin-nav-item span { display: none; }
-    .admin-content { margin-left: 60px; padding: 1rem; }
-    .admin-logo { padding: 0 0 1rem 0; text-align: center; font-size: 1rem;}
-    .admin-nav-item { justify-content: center; padding: 0.75rem; }
+    .admin-body { flex-direction: column; }
+    .admin-header-mobile { display: flex; }
+    .admin-sidebar { transform: translateX(-100%); width: 260px; }
+    .admin-sidebar.open { transform: translateX(0); }
+    .admin-content { margin-left: 0; width: 100%; padding: 1.5rem 1rem; }
 }
