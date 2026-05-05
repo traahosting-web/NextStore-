@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - NexturaStore</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="dark">
+    <div id="loading-overlay">Memproses...</div>
+    <div class="auth-container">
+        <h1 class="logo-title" style="margin-bottom: 2rem;">Nextura<span>Store</span></h1>
+        <div class="auth-box">
+            <h2 class="auth-title">Daftar Akun</h2>
+            
+            <div id="auth-error" class="error-message"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <input type="email" id="reg-email" class="form-control" placeholder="Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="reg-password" class="form-control" placeholder="Password (Min 6 Karakter)" required>
+                </div>
+                <button type="submit" class="btn-primary">Daftar</button>
+            </form>
+            <a href="login.html" class="auth-link">Sudah punya akun? Login di sini</a>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
