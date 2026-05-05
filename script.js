@@ -14,7 +14,8 @@ import {
     setDoc,
     getDoc,
     collection,
-    onSnapshot
+    onSnapshot,
+    updateDoc
 } from './firebase.js';
 
 // ========== AUTHENTICATION & RBAC LOGIC ==========
@@ -25,7 +26,7 @@ const showLoading = () => { if (loadingOverlay) loadingOverlay.style.display = '
 const hideLoading = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };
 const handleError = (error) => { hideLoading(); alert("Error: " + error.message); };
 
-// Auth State Observer with RBAC check
+// Auth State Observer with CRITICAL RBAC check & null email fix
 onAuthStateChanged(auth, async (user) => {
     const isAuthPage = path.includes('login.html') || path.includes('register.html');
     
@@ -33,47 +34,57 @@ onAuthStateChanged(auth, async (user) => {
         if (isAuthPage) window.location.href = 'index.html';
         
         const userNameEl = document.getElementById('user-name');
-        if (userNameEl) userNameEl.innerText = user.displayName || user.email.split('@')[0];
+        if (userNameEl) userNameEl.innerText = user.displayName || user.email?.split('@')[0] || "User";
 
         // Menyesuaikan Foto Profil dan Email
         const userAvatar = document.getElementById('user-avatar');
         const userEmail = document.getElementById('user-email');
         
+        // Ensure safeEmail is NEVER null. Priority: Auth email -> Provider email -> Generated placeholder
+        const safeEmail = user.email || (user.providerData && user.providerData.length > 0 && user.providerData[0].email) || `user-${user.uid.substring(0, 8)}@nexturastore.com`;
+
         if (userAvatar) {
             if (user.photoURL) {
                 userAvatar.src = user.photoURL;
             } else {
-                const nameInitial = encodeURIComponent(user.displayName || user.email.split('@')[0]);
+                const nameInitial = encodeURIComponent(user.displayName || safeEmail.split('@')[0]);
                 userAvatar.src = `https://ui-avatars.com/api/?name=${nameInitial}&background=3b82f6&color=fff`;
             }
         }
         
         if (userEmail) {
-            userEmail.innerText = user.email;
+            userEmail.innerText = safeEmail;
         }
 
-        // RBAC: Check or Create User Document
+        // RBAC & Critical Firestore Update: Check or Create User Document safely
         const userRef = doc(db, 'users', user.uid);
         try {
             const docSnap = await getDoc(userRef);
             if (!docSnap.exists()) {
-                // Auto create document for new user
+                // Auto create document for new user with secure non-null email
                 await setDoc(userRef, {
                     uid: user.uid,
-                    email: user.email,
+                    email: safeEmail,
                     role: 'user', // Default role
                     createdAt: new Date()
                 });
             } else {
                 const userData = docSnap.data();
                 const btnAdmin = document.getElementById('btn-admin');
+                
+                // Fix: if old user was stored with null email, update it
+                if (!userData.email || userData.email === null) {
+                    await updateDoc(userRef, { email: safeEmail });
+                }
+
                 // Tampilkan menu Admin Panel jika role == admin
                 if (userData.role === 'admin' && btnAdmin) {
                     btnAdmin.style.display = 'flex';
                 }
             }
         } catch (err) {
-            console.error("Error fetching user role: ", err);
+            console.error("Error fetching/creating user role: ", err);
+            // Permissions might reject read if rules are extremely tight, but normally self-read is allowed.
         }
         
     } else {
@@ -386,22 +397,26 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
         }
     };
 
-    // Listeners Real-time Firestore
-    onSnapshot(collection(db, 'products'), (snapshot) => {
-        products = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        renderStore();
-        renderTesti(); // Panggil ulang untuk mapping nama produk
-    });
+    // Listeners Real-time Firestore safely wrapped
+    try {
+        onSnapshot(collection(db, 'products'), (snapshot) => {
+            products = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            renderStore();
+            renderTesti(); 
+        }, (err) => console.error(err));
 
-    onSnapshot(collection(db, 'mods'), (snapshot) => {
-        mods = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).filter(m => m.isActive !== false);
-        renderMods();
-    });
+        onSnapshot(collection(db, 'mods'), (snapshot) => {
+            mods = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).filter(m => m.isActive !== false);
+            renderMods();
+        }, (err) => console.error(err));
 
-    onSnapshot(collection(db, 'testimonials'), (snapshot) => {
-        testimonials = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        renderTesti();
-    });
+        onSnapshot(collection(db, 'testimonials'), (snapshot) => {
+            testimonials = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            renderTesti();
+        }, (err) => console.error(err));
+    } catch(err) {
+        console.error("Firestore Error:", err);
+    }
 
     // --- Pencarian ---
     const searchInput = document.querySelector('.search-input');
