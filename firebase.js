@@ -10,8 +10,22 @@ import {
     signOut,
     sendPasswordResetEmail,
     fetchSignInMethodsForEmail,
-    sendEmailVerification // 👈 Tambahkan ini
+    sendEmailVerification 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { 
+    getFirestore, 
+    collection, 
+    doc, 
+    setDoc, 
+    getDoc, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    onSnapshot, 
+    query, 
+    where, 
+    orderBy 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // GANTI DENGAN CONFIG FIREBASE ANDA
 const firebaseConfig = {
@@ -25,10 +39,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 export { 
     auth, 
+    db,
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     googleProvider, 
@@ -38,4 +54,15 @@ export {
     sendPasswordResetEmail,
     fetchSignInMethodsForEmail,
     sendEmailVerification,
+    collection, 
+    doc, 
+    setDoc, 
+    getDoc, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    onSnapshot, 
+    query, 
+    where, 
+    orderBy
 };
