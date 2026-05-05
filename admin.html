@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -8,9 +9,23 @@
 </head>
 <body class="admin-body">
     <div id="loading-overlay" style="display: flex;">Memeriksa Otorisasi...</div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Mobile Header -->
+    <div class="admin-header-mobile">
+        <div class="admin-logo" style="padding: 0; border: none; margin: 0; font-size: 1.3rem;">Nextura<span>Admin</span></div>
+        <button class="btn-hamburger" id="btn-hamburger">
+            <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </button>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Sidebar Nav -->
-    <div class="admin-sidebar">
+    <div class="admin-sidebar" id="admin-sidebar">
         <div class="admin-logo">Nextura<span>Admin</span></div>
         <div class="admin-nav">
             <div class="admin-nav-item active" data-tab="tab-dashboard">
@@ -90,6 +105,7 @@
                     <div class="form-group">
                         <label>Gambar Produk (Cloudinary)</label>
                         <input type="file" id="prod-image" class="form-control" accept="image/*">
+                        <img id="prod-image-preview" class="image-preview" alt="Preview">
                         <small style="color:var(--text-secondary)">Biarkan kosong jika tanpa gambar.</small>
                     </div>
                     <div class="form-group">
@@ -146,6 +162,7 @@
                     <div class="form-group">
                         <label>Upload Gambar (Cloudinary)</label>
                         <input type="file" id="mod-image" class="form-control" accept="image/*" required>
+                        <img id="mod-image-preview" class="image-preview" alt="Preview">
                     </div>
                     <div class="form-group">
                         <label>Kategori</label>
@@ -227,3 +244,6 @@
     <script type="module" src="admin.js"></script>
 </body>
 </html>
+
+
+```
