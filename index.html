@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -9,6 +10,9 @@
 </head>
 <body data-theme="dark">
     <div id="loading-overlay" style="display: flex;">Memeriksa Sesi...</div>
+    
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
 
     <header class="app-header">
         <div class="header-left">
@@ -66,7 +70,7 @@
     <main>
         <section id="store-section" class="section active">
             <div class="alert-box" id="store-alert">
-                <span>✅ Produk <b>ORIGINAL PREMIUM 100%</b>, bukan MOD/bajakan.</span>
+                <span><svg viewBox="0 0 24 24" width="16" height="16" fill="#10b981" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Produk <b>ORIGINAL PREMIUM 100%</b>, bukan MOD/bajakan.</span>
                 <button class="icon-btn" onclick="document.getElementById('store-alert').classList.add('hidden')">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                 </button>
@@ -76,21 +80,86 @@
 
         <section id="mod-section" class="section">
             <div class="alert-box">
-                <span>⚠️ Ini aplikasi <b>MOD gratis</b>, tanpa bayar tapi lebih banyak bug/error.</span>
+                <span><svg viewBox="0 0 24 24" width="16" height="16" fill="#fbbf24" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg> Ini aplikasi <b>MOD gratis</b>, tanpa bayar tapi lebih banyak bug/error.</span>
             </div>
             <div class="grid-container" id="mod-list"></div>
         </section>
 
         <section id="testi-section" class="section">
-            <h2 style="margin-bottom: 1rem; font-size: 1.2rem;">Testimoni Pelanggan</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                <h2 style="font-size: 1.2rem; margin: 0;">Testimoni Pelanggan</h2>
+                <button id="btn-open-testi-modal" class="btn-submit-testi">
+                    <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    Submit Testimoni
+                </button>
+            </div>
             <div class="grid-container" id="testi-list"></div>
         </section>
 
         <section id="detail-section" class="section">
-            <button class="btn-secondary btn-primary" id="btn-back" style="margin-bottom: 1.5rem;">&larr; Kembali</button>
+            <button class="btn-secondary btn-primary" id="btn-back" style="margin-bottom: 1.5rem;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg> Kembali
+            </button>
             <div id="detail-content"></div>
         </section>
     </main>
+
+    <!-- TESTIMONIAL SUBMISSION MODAL -->
+    <div id="testi-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button id="btn-close-testi-modal" class="icon-btn modal-close-btn">
+                <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+            
+            <h3 class="modal-title">Berikan Testimoni</h3>
+            <p style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-top: -1rem; margin-bottom: 1.5rem;">Pengalaman Anda sangat berarti bagi kami!</p>
+            
+            <form id="form-user-testi" class="auth-form" style="width: 100%;">
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Pilih Produk</label>
+                    <select id="user-testi-product" class="form-control selector-dropdown" required>
+                        <option value="">-- Memuat Produk... --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Username (Publik)</label>
+                    <input type="text" id="user-testi-name" class="form-control" required placeholder="Contoh: @user***123">
+                </div>
+                
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Rating Penilaian</label>
+                    <div class="star-rating" id="user-star-container">
+                        <svg data-val="1" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg data-val="2" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg data-val="3" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg data-val="4" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg data-val="5" viewBox="0 0 24 24" class="selected"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </div>
+                    <input type="hidden" id="user-testi-rating" value="5">
+                </div>
+                
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Komentar Cepat</label>
+                    <div class="chip-container" id="quick-comment-chips">
+                        <span class="chip">Amanah</span>
+                        <span class="chip">Terpercaya</span>
+                        <span class="chip">Murah</span>
+                        <span class="chip">Fast Respon</span>
+                        <span class="chip">Recommended</span>
+                        <span class="chip">Ramah</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Tulis Komentar Lengkap</label>
+                    <textarea id="user-testi-comment" class="form-control" rows="3" placeholder="Bagaimana pengalaman Anda?" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="btn-submit-user-testi">Kirim Testimoni</button>
+            </form>
+        </div>
+    </div>
 
     <nav class="bottom-nav">
         <div class="nav-item" data-target="mod-section">
