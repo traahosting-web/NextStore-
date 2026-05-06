@@ -15,10 +15,12 @@ import {
     getDoc,
     collection,
     onSnapshot,
-    updateDoc
+    updateDoc,
+    addDoc
 } from './firebase.js';
 
-// ========== AUTHENTICATION & RBAC LOGIC ==========
+// ========== GLOBAL VARIABLES & UTILS ==========
+let currentUser = null;
 const path = window.location.pathname;
 const loadingOverlay = document.getElementById('loading-overlay');
 
@@ -26,8 +28,30 @@ const showLoading = () => { if (loadingOverlay) loadingOverlay.style.display = '
 const hideLoading = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };
 const handleError = (error) => { hideLoading(); alert("Error: " + error.message); };
 
+// TOAST NOTIFICATION SYSTEM (Shared with User Side)
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if(!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const successIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+    const errorIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+    
+    toast.innerHTML = `${type === 'success' ? successIcon : errorIcon} <span>${message}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => { 
+        toast.style.animation = 'fadeOut 0.3s ease forwards'; 
+        setTimeout(() => toast.remove(), 300); 
+    }, 4000);
+}
+
+// ========== AUTHENTICATION & RBAC LOGIC ==========
 // Auth State Observer with CRITICAL RBAC check & null email fix
 onAuthStateChanged(auth, async (user) => {
+    currentUser = user; // Track globally for form submissions
     const isAuthPage = path.includes('login.html') || path.includes('register.html');
     
     if (user) {
@@ -417,8 +441,10 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
             renderMods();
         }, (err) => console.error(err));
 
+        // Sort testimonial terbaru berdasarkan tanggal
         onSnapshot(collection(db, 'testimonials'), (snapshot) => {
-            testimonials = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            let fetchedTestis = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            testimonials = fetchedTestis.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
             renderTesti();
         }, (err) => console.error(err));
     } catch(err) {
@@ -460,7 +486,6 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
         });
     });
 
-    // FIXED: Menerapkan UI Deskripsi Box Modern dengan Left Alignment & Scrolling
     window.openDetail = (id) => {
         const p = products.find(x => x.id === id);
         if (!p) return;
@@ -514,6 +539,143 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
             
             const storeNav = document.querySelector('.nav-item[data-target="store-section"]');
             if (storeNav) storeNav.classList.add('active');
+        });
+    }
+
+    // =========================================
+    // USER TESTIMONIAL SUBMISSION SYSTEM LOGIC
+    // =========================================
+    const btnOpenTestiModal = document.getElementById('btn-open-testi-modal');
+    const btnCloseTestiModal = document.getElementById('btn-close-testi-modal');
+    const testiModalOverlay = document.getElementById('testi-modal-overlay');
+    const selectProduct = document.getElementById('user-testi-product');
+    const inputName = document.getElementById('user-testi-name');
+    const inputComment = document.getElementById('user-testi-comment');
+    const inputRating = document.getElementById('user-testi-rating');
+    const formUserTesti = document.getElementById('form-user-testi');
+    
+    // Star Rating Interaction
+    const userStars = document.querySelectorAll('#user-star-container svg');
+    userStars.forEach(star => {
+        star.addEventListener('mouseover', () => {
+            const val = parseInt(star.dataset.val);
+            userStars.forEach(s => s.classList.toggle('hovered', parseInt(s.dataset.val) <= val));
+        });
+        star.addEventListener('mouseout', () => {
+            userStars.forEach(s => s.classList.remove('hovered'));
+        });
+        star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.val);
+            inputRating.value = val;
+            userStars.forEach(s => {
+                if (parseInt(s.dataset.val) <= val) s.classList.add('selected');
+                else s.classList.remove('selected');
+            });
+        });
+    });
+
+    // Quick Comment Chips Interaction
+    const commentChips = document.querySelectorAll('#quick-comment-chips .chip');
+    commentChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('selected');
+            const text = chip.innerText;
+            
+            if (chip.classList.contains('selected')) {
+                // Tambahkan teks ke textbox dengan aman
+                inputComment.value = inputComment.value ? inputComment.value + " " + text : text;
+            } else {
+                // Hapus teks tanpa merusak tulisan manual user
+                inputComment.value = inputComment.value.replace(text, "").replace(/  +/g, ' ').trim();
+            }
+        });
+    });
+
+    // Open Modal Handling & Validation
+    if (btnOpenTestiModal) {
+        btnOpenTestiModal.addEventListener('click', () => {
+            if (!currentUser) {
+                showToast('Silakan login terlebih dahulu untuk memberikan testimoni!', 'error');
+                return;
+            }
+
+            // Populate Products
+            selectProduct.innerHTML = '<option value="">-- Pilih Produk --</option>';
+            products.forEach(p => {
+                selectProduct.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            });
+
+            // Auto-fill & Mask Username
+            const rawName = currentUser.displayName || currentUser.email.split('@')[0];
+            let maskedName = rawName;
+            if (rawName.length > 3) {
+                maskedName = "@" + rawName.substring(0, 3) + "***" + rawName.substring(rawName.length - 1);
+            } else {
+                maskedName = "@" + rawName + "***";
+            }
+            inputName.value = maskedName;
+
+            // Show modal smoothly
+            testiModalOverlay.classList.add('active');
+        });
+    }
+
+    // Close Modal Handling
+    if (btnCloseTestiModal) {
+        btnCloseTestiModal.addEventListener('click', () => {
+            testiModalOverlay.classList.remove('active');
+            setTimeout(() => {
+                formUserTesti.reset();
+                // Reset Stars to 5
+                inputRating.value = 5;
+                userStars.forEach(s => s.classList.add('selected'));
+                // Reset Chips
+                commentChips.forEach(c => c.classList.remove('selected'));
+            }, 300); // Delay reset untuk transisi penutupan
+        });
+    }
+
+    // Submit Handling
+    if (formUserTesti) {
+        formUserTesti.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentUser) return;
+            
+            const submitBtn = document.getElementById('btn-submit-user-testi');
+            const productId = selectProduct.value;
+            const name = inputName.value.trim();
+            const rating = parseInt(inputRating.value);
+            const comment = inputComment.value.trim();
+
+            if (!productId || !name || !comment) {
+                showToast('Mohon lengkapi seluruh field testimoni.', 'error');
+                return;
+            }
+
+            const originalText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Mengirim Testimoni...';
+
+            try {
+                await addDoc(collection(db, 'testimonials'), {
+                    name: name,
+                    productId: productId,
+                    rating: rating,
+                    comment: comment,
+                    userId: currentUser.uid, 
+                    createdAt: new Date()
+                });
+                
+                showToast('Testimoni berhasil dikirim! Terima kasih atas feedback Anda.', 'success');
+                btnCloseTestiModal.click(); // Otomatis menutup modal
+            } catch (err) {
+                console.error("Testimonial Upload Error", err);
+                showToast('Gagal mengirim testimoni: ' + err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            }
         });
     }
 }
