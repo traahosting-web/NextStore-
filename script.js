@@ -131,59 +131,66 @@ if (path.includes('login.html')) {
         });
     }
 
+    // FIXED: RESET PASSWORD SYSTEM
     if (resetForm) {
-        resetForm.addEventListener('submit', (e) => {
+        resetForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoading();
+            
             if (resetError) resetError.style.display = 'none';
 
             const resetEmail = document.getElementById('reset-email').value;
+            const submitBtn = resetForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
 
-            fetchSignInMethodsForEmail(auth, resetEmail)
-                .then((signInMethods) => {
-                    if (signInMethods.length === 0) {
-                        hideLoading();
-                        if (resetError) {
-                            resetError.style.display = 'block';
-                            resetError.style.color = '#ef4444';
-                            resetError.style.borderColor = '#ef4444';
-                            resetError.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                            resetError.innerText = "Email tidak ditemukan atau belum terdaftar. Silakan periksa kembali email Anda.";
-                        }
+            try {
+                // Set tombol ke state loading
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Mengirim Link Reset...';
+
+                // Eksekusi langsung sendPasswordResetEmail
+                await sendPasswordResetEmail(auth, resetEmail);
+
+                // Success Handling
+                hideLoading();
+                if (resetError) {
+                    resetError.style.display = 'block';
+                    resetError.style.color = '#10b981';
+                    resetError.style.borderColor = '#10b981';
+                    resetError.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                    resetError.innerText = "Link reset password berhasil dikirim. Silakan cek inbox atau folder spam email Anda.";
+                }
+
+                // Kosongkan form setelah sukses terkirim
+                document.getElementById('reset-email').value = '';
+
+            } catch (error) {
+                // Error Handling
+                hideLoading();
+                if (resetError) {
+                    resetError.style.display = 'block';
+                    resetError.style.color = '#ef4444';
+                    resetError.style.borderColor = '#ef4444';
+                    resetError.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    
+                    // Terjemahan Error Code Spesifik Firebase ke bahasa Indonesia
+                    if (error.code === 'auth/user-not-found') {
+                        resetError.innerText = "Email tidak ditemukan atau belum terdaftar.";
+                    } else if (error.code === 'auth/invalid-email') {
+                        resetError.innerText = "Format email tidak valid.";
+                    } else if (error.code === 'auth/too-many-requests') {
+                        resetError.innerText = "Terlalu banyak percobaan. Silakan coba lagi nanti.";
+                    } else if (error.code === 'auth/network-request-failed') {
+                        resetError.innerText = "Gangguan jaringan. Periksa koneksi internet Anda.";
                     } else {
-                        sendPasswordResetEmail(auth, resetEmail)
-                            .then(() => {
-                                hideLoading();
-                                if (resetError) {
-                                    resetError.style.display = 'block';
-                                    resetError.style.color = '#10b981';
-                                    resetError.style.borderColor = '#10b981';
-                                    resetError.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
-                                    resetError.innerText = "Tautan untuk mereset kata sandi telah dikirim! Silakan periksa kotak masuk atau folder spam Anda.";
-                                }
-                            })
-                            .catch((error) => {
-                                hideLoading();
-                                if (resetError) {
-                                    resetError.style.display = 'block';
-                                    resetError.style.color = '#ef4444';
-                                    resetError.style.borderColor = '#ef4444';
-                                    resetError.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-                                    resetError.innerText = "Terjadi kesalahan: " + error.message;
-                                }
-                            });
-                    }
-                })
-                .catch((error) => {
-                    hideLoading();
-                    if (resetError) {
-                        resetError.style.display = 'block';
-                        resetError.style.color = '#ef4444';
-                        resetError.style.borderColor = '#ef4444';
-                        resetError.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                         resetError.innerText = "Terjadi kesalahan: " + error.message;
                     }
-                });
+                }
+            } finally {
+                // Kembalikan state tombol ke bentuk awal
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
         });
     }
 
