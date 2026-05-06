@@ -721,3 +721,117 @@ body[data-theme="light"] .card {
 }
 .star-rating svg:hover { transform: scale(1.15); }
 .star-rating svg.hovered, .star-rating svg.selected { fill: #fbbf24; }
+
+/* =========================================
+   USER TESTIMONIAL SUBMISSION SYSTEM UI
+========================================= */
+
+/* Submit Button in Section Header */
+.btn-submit-testi {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+.btn-submit-testi:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+.btn-submit-testi svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+/* Modal Popup Core */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem 1.5rem;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-overlay.active .modal-content {
+    transform: translateY(0) scale(1);
+}
+
+/* Modal Internal Elements */
+.modal-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    padding: 6px;
+}
+.modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+/* Custom Scrollbar specifically for modal */
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
+
+/* Quick Comment Chips */
+.chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.chip.selected {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 600;
+}
