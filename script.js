@@ -460,6 +460,7 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
         });
     });
 
+    // FIXED: Menerapkan UI Deskripsi Box Modern dengan Left Alignment & Scrolling
     window.openDetail = (id) => {
         const p = products.find(x => x.id === id);
         if (!p) return;
@@ -480,6 +481,9 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
         }
 
         const waLink = p.whatsappLink || `https://wa.me/6283190718255?text=${encodeURIComponent(`Halo, saya ingin order ${p.name}`)}`;
+        
+        // Format deskripsi agar enter (line break) dari database terbaca sebagai <br>
+        const formattedDesc = p.description ? p.description.replace(/\n/g, '<br>') : 'Tidak ada deskripsi tersedia.';
 
         const detailContent = document.getElementById('detail-content');
         if (detailContent) {
@@ -488,7 +492,12 @@ if (!path.includes('login.html') && !path.includes('register.html') && !path.inc
                     ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:100%; height:100%; object-fit:cover;" alt="${p.name}">` : `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:var(--accent-color); color:white; font-size:2rem">${p.name.charAt(0)}</div>`}
                 </div>
                 <h2 class="detail-title">${p.name}</h2>
-                <p style="text-align:center; color:var(--text-secondary); margin-bottom: 1.5rem;">${p.description || ''}</p>
+                
+                <!-- Modern Description Box Container -->
+                <div class="detail-desc-box">
+                    ${formattedDesc}
+                </div>
+                
                 <div class="price-list">${pricesHTML}</div>
                 <a href="${waLink}" target="_blank" class="btn-primary">Order via WhatsApp</a>
             `;
